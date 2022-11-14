@@ -1,0 +1,477 @@
+---
+title: "Bivalent Reporting"
+author: "Samantha Johnson"
+date: "2022-11-07"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+shhh <- suppressPackageStartupMessages 
+shhh(library(ggplot2))
+shhh(library(dplyr))
+shhh(library(tidyverse))
+shhh(library(lubridate))
+
+setwd("C:/Users/snj00/OneDrive/Documents/JIATF")
+CDC_Bivalent = read.csv("Bivalent/COVID-19_Vaccinations_in_the_United_States_Jurisdiction.csv")
+```
+
+```{r include=FALSE}
+#Creating Table with just bivalent reporting
+Date <- c(CDC_Bivalent$Date)
+State <- c(CDC_Bivalent$Location)
+Bivalent_5Up <- c(CDC_Bivalent$Bivalent_Booster_5Plus)
+Bivalent_Pop_Pct_5Up <- c(CDC_Bivalent$Bivalent_Booster_5Plus / CDC_Bivalent$Series_Complete_5Plus)
+Bivalent_12Up <-(CDC_Bivalent$Bivalent_Booster_12Plus)
+Bivalent_Pop_Pct_12Up <- c(CDC_Bivalent$Bivalent_Booster_12Plus / CDC_Bivalent$Series_Complete_12Plus)
+Bivalent_18Up <- c(CDC_Bivalent$Bivalent_Booster_18Plus)
+Bivalent_Pop_Pct_18Up <- c(CDC_Bivalent$Bivalent_Booster_18Plus / CDC_Bivalent$Series_Complete_18Plus)
+Bivalent_65Up <- c(CDC_Bivalent$Bivalent_Booster_65Plus)
+Bivalent_Pop_Pct_65Up <- c(CDC_Bivalent$Bivalent_Booster_65Plus / CDC_Bivalent$Series_Complete_65Plus)
+
+
+CDC_Bivalent_Table <- data.frame(Date, State, Bivalent_5Up, Bivalent_Pop_Pct_5Up, Bivalent_12Up, Bivalent_Pop_Pct_12Up, Bivalent_18Up, Bivalent_Pop_Pct_18Up, Bivalent_65Up, Bivalent_Pop_Pct_65Up)
+CDC_Bivalent_Table$Date <- as.Date(CDC_Bivalent_Table$Date,format = "%m/%d/%Y")
+```
+
+```{r include=FALSE}
+#Creating Subsets of the data based in US Regions
+#https://www2.census.gov/geo/pdfs/maps-data/maps/reference/us_regdiv.pdf
+
+NewEngland <- filter(CDC_Bivalent_Table, State %in% c("ME", "NH", "VT", "MA", "CT", "RI", "US", "WV")) %>% filter(Date== max(Date))
+MiddleAtlantic <- filter(CDC_Bivalent_Table, State %in% c("NY", "PA", "NJ", "US", "WV")) %>% filter(Date== max(Date))
+SouthAtlantic <- filter(CDC_Bivalent_Table, State %in% c("WV", "MD", "DE", "VA", "NC", "SC", "GA", "FL", "US")) %>% filter(Date== max(Date))
+EastSouthCentral <- filter(CDC_Bivalent_Table, State %in% c("KY", "TN", "MS", "AL", "WV", "US")) %>% filter(Date== max(Date))
+EastNorthCentral <- filter(CDC_Bivalent_Table, State %in% c("WI", "MI", "IL", "IN", "OH", "WV", "US")) %>% filter(Date== max(Date))
+WestNorthCentral <- filter(CDC_Bivalent_Table, State %in% c("ND", "SD", "MN", "NE", "IA", "KS", "MO", "US", "WV")) %>% filter(Date== max(Date))
+WestSouthCentral <- filter(CDC_Bivalent_Table, State %in% c("OK", "AR", "TX", "AR", "LA", "US", "WV")) %>% filter(Date== max(Date))
+Mountain <- filter(CDC_Bivalent_Table, State %in% c("MT", "ID", "WY", "NV", "UT", "CO", "AZ", "NM", "US", "WV")) %>% filter(Date== max(Date))
+Pacific <- filter(CDC_Bivalent_Table, State %in% c("AK", "WA", "OR", "CA", "HI", "US", "WV")) %>% filter(Date== max(Date))
+Contiguous <- filter(CDC_Bivalent_Table, State %in% c("WV", "PA", "MD", "OH", "KY", "VA", "US", "WV")) %>% filter(Date== max(Date))
+SimilarPopulations <- filter(CDC_Bivalent_Table, State %in% c("WV", "ID", "NE", "HI", "NH", "ME", "US", "WV")) %>% filter(Date== max(Date))
+
+#Colors
+NewEnglandColor <- c(rep("#002855",5), "#A2AAAD", "#002855", "#EAAA00")
+MiddleAtlanticColor <-  c(rep("#002855",3), "#A2AAAD", "#EAAA00")
+SouthAtlanticColor <- c(rep("#002855",6), "#A2AAAD", "#002855","#EAAA00")
+EastSouthCentralColor <- c(rep("#002855",4), "#A2AAAD", "#EAAA00")
+EastNorthCentralColor <- c(rep("#002855",4), "#A2AAAD", "#002855","#EAAA00")
+WestNorthCentralColor <- c(rep("#002855",7), "#A2AAAD", "#EAAA00")
+WestSouthCentralColor <- c(rep("#002855",4), "#A2AAAD", "#EAAA00")
+MountainColor <- c(rep("#002855",6), "#A2AAAD","#002855", "#EAAA00","#002855")
+PacificColor <- c(rep("#002855",4), "#A2AAAD", "#002855","#EAAA00")
+ContiguousColor <- c(rep("#002855",4), "#A2AAAD", "#002855","#EAAA00")
+SimilarPopulationsColor <- c(rep("#002855",5), "#A2AAAD", "#EAAA00")
+```
+
+```{r echo=FALSE}
+#Regional Plots for 5+ % of Eligible Popualtion
+ggplot(NewEngland,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Population 5+\n New England Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=NewEnglandColor)
+  
+ggplot(MiddleAtlantic,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n Middle Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MiddleAtlanticColor)
+
+ggplot(SouthAtlantic,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n South Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SouthAtlanticColor)
+
+ggplot(EastSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n East South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastSouthCentralColor)
+
+ggplot(EastNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n East North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastNorthCentralColor)
+
+ggplot(WestNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n West North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestNorthCentralColor)
+
+ggplot(WestSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n West South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestSouthCentralColor)
+
+ggplot(Mountain,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n Mountain Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MountainColor)
+
+ggplot(Pacific,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n Pacific Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=PacificColor)
+
+ggplot(Contiguous,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n Contiguous States to WV vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=ContiguousColor)
+
+ggplot(SimilarPopulations,aes(x=State, y=Bivalent_Pop_Pct_5Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 5+\n Similar Populations to WV vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_5Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SimilarPopulationsColor)
+```
+
+```{r echo=FALSE}
+#Regional Plots for 12+ % of Eligible Popualtion
+ggplot(NewEngland,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="Percent of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n New England Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=NewEnglandColor)
+  
+ggplot(MiddleAtlantic,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n Middle Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MiddleAtlanticColor)
+
+ggplot(SouthAtlantic,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n South Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SouthAtlanticColor)
+
+ggplot(EastSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n East South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastSouthCentralColor)
+
+ggplot(EastNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n East North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastNorthCentralColor)
+
+ggplot(WestNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n West North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestNorthCentralColor)
+
+ggplot(WestSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n West South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestSouthCentralColor)
+
+ggplot(Mountain,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n Mountain Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MountainColor)
+
+ggplot(Pacific,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n Pacific Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=PacificColor)
+
+ggplot(Contiguous,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n Contiguous States to WV vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=ContiguousColor)
+
+ggplot(SimilarPopulations,aes(x=State, y=Bivalent_Pop_Pct_12Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 12+\n Similar Populations to WV vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_12Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SimilarPopulationsColor)
+```
+
+```{r echo=FALSE}
+#Regional Plots for 18+ % of Eligible Popualtion
+ggplot(NewEngland,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Population", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n New England Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=NewEnglandColor)
+  
+ggplot(MiddleAtlantic,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n Middle Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MiddleAtlanticColor)
+
+ggplot(SouthAtlantic,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n South Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SouthAtlanticColor)
+
+ggplot(EastSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n East South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastSouthCentralColor)
+
+ggplot(EastNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n East North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastNorthCentralColor)
+
+ggplot(WestNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n West North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestNorthCentralColor)
+
+ggplot(WestSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n West South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestSouthCentralColor)
+
+ggplot(Mountain,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n Mountain Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MountainColor)
+
+ggplot(Pacific,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n Pacific Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=PacificColor)
+
+ggplot(Contiguous,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n Contiguous States to WV vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=ContiguousColor)
+
+ggplot(SimilarPopulations,aes(x=State, y=Bivalent_Pop_Pct_18Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 18+\n Similar Populations to WV vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_18Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SimilarPopulationsColor)
+```
+
+```{r echo=FALSE}
+#Regional Plots for 65+ % of Eligible Popualtion
+ggplot(NewEngland,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Population", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n New England Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=NewEnglandColor)
+  
+ggplot(MiddleAtlantic,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n Middle Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MiddleAtlanticColor)
+
+ggplot(SouthAtlantic,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n South Atlantic Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SouthAtlanticColor)
+
+ggplot(EastSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n East South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastSouthCentralColor)
+
+ggplot(EastNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n East North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=EastNorthCentralColor)
+
+ggplot(WestNorthCentral,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n West North Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestNorthCentralColor)
+
+ggplot(WestSouthCentral,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n West South Central Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=WestSouthCentralColor)
+
+ggplot(Mountain,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n Mountain Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=MountainColor)
+
+ggplot(Pacific,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n Pacific Region vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=PacificColor)
+
+ggplot(Contiguous,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n Contiguous States to WV vs WV" )+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=ContiguousColor)
+
+ggplot(SimilarPopulations,aes(x=State, y=Bivalent_Pop_Pct_65Up, fill=State))+
+  geom_bar(stat="identity")+
+  labs(x="State", y="% of Popualtion", subtitle = "CDC Jurisdiction", caption = "US is the national average")+
+  ggtitle("% of Eligible Popualtion 65+\n Similar Populations to WV vs WV")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none")+
+  scale_y_continuous(labels = scales::percent_format())+
+  geom_text(aes(label = paste0(round(Bivalent_Pop_Pct_65Up * 100, 1), "%")), position = position_stack(vjust = 1.035))+
+  scale_fill_manual(values=SimilarPopulationsColor)
+```
